@@ -1,5 +1,3 @@
 *.json
 __pycache__
 results
-headers.json
-
