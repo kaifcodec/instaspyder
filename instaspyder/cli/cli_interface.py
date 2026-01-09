@@ -20,7 +20,7 @@ def get_user_inputs():
     except OSError:
         columns = 80
 
-    title = "InstaFinder — Recursive chain searcher"
+    title = "InstaSpyder — Recursive chain searcher"
     box_width = len(title) + 4
     padding = (columns - box_width) // 2
 
