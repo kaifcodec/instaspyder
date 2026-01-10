@@ -1,11 +1,11 @@
 # search_logic.py (Modified for Async - cleaner output)
 import asyncio
 import random
-from core.instagram_api import fetch_chain_async
-from core.user_id_fetcher import get_user_id
-from assets.config import MAX_DEPTH
-from utils.sanitize_text import sanitize_text
-from utils.colors import C, G, R, Y, X
+from instaspyder.core.instagram_api import fetch_chain_async
+from instaspyder.core.user_id_fetcher import get_user_id
+from instaspyder.assets.config import MAX_DEPTH
+from instaspyder.utils.sanitize_text import sanitize_text
+from instaspyder.utils.colors import C, G, R, Y, X
 
 async def recursive_chain_search_async(username, keywords_to_match, visited_users, all_found_matches, depth=0, known_user_id=None):
     indent = "  " * depth

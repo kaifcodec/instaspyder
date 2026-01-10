@@ -1,7 +1,7 @@
 # user_id_fetcher.py
 import httpx
 import json
-from utils.colors import C, G, R, Y, X
+from instaspyder.utils.colors import C, G, R, Y, X
 
 GENERIC_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",

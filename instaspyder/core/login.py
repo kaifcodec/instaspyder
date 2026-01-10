@@ -3,7 +3,7 @@ import hashlib
 import uuid
 import hmac
 import requests
-from utils.colors import R, X, PC
+from instaspyder.utils.colors import R, X, PC
 
 V = "v1"
 API_URL = "https://i.instagram.com/api/{version}/"

@@ -1,8 +1,8 @@
 import os
 import sys
 import re
-from assets.config import CUMULATIVE_RESULTS_DIR
-from utils.colors import C, G, R, Y, X
+from instaspyder.assets.config import CUMULATIVE_RESULTS_DIR
+from instaspyder.utils.colors import C, G, R, Y, X
 
 def initialize_search_environment():
     try:

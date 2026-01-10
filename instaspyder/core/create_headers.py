@@ -1,7 +1,7 @@
 import json
 import base64
-from core.auth import login_instagram
-from assets.config import BASE_DIR
+from instaspyder.core.auth import login_instagram
+from instaspyder.assets.config import BASE_DIR
 # ---------- Modern Pixel 8 Pro Fingerprint (Android 15) ----------
 USER_AGENT = "Instagram 123.0.0.0 Android (30/11; 420dpi; 1080x1920; Google; Pixel; sailfish; qcom; en_US)"
 APP_ID = "567067343352427"

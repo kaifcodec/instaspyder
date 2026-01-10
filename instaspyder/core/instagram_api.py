@@ -1,8 +1,8 @@
 # instagram_api.py (Modified for Async)
 import httpx
 import json
-from core.headers_loader import load_headers
-from utils.colors import C, G, R, Y, X
+from instaspyder.core.headers_loader import load_headers
+from instaspyder.utils.colors import C, G, R, Y, X
 
 HEADERS = load_headers()
 

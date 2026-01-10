@@ -1,8 +1,8 @@
 # headers_loader.py
 import json
 import sys
-from assets.config import HEADERS_FILE
-from utils.colors import R, X
+from instaspyder.assets.config import HEADERS_FILE
+from instaspyder.utils.colors import R, X
 
 def load_headers():
     try:

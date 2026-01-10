@@ -1,8 +1,8 @@
 # state_manager.py
 import json
 import os
-from assets.config import STATE_FILE_TEMPLATE, CUMULATIVE_RESULTS_DIR
-from utils.colors import C, G, R, Y, X
+from instaspyder.assets.config import STATE_FILE_TEMPLATE, CUMULATIVE_RESULTS_DIR
+from instaspyder.utils.colors import C, G, R, Y, X
 
 def _get_state_filepath(username):
     safe_username = "".join(c for c in username if c.isalnum())
