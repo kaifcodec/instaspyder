@@ -2,12 +2,12 @@ import json
 import hashlib
 import uuid
 import hmac
-import requests
-from instaspyder.utils.colors import R, X, PC
+import httpx
+from instaspyder.utils.colors import R, X, C
 
 V = "v1"
 API_URL = "https://i.instagram.com/api/{version}/"
-USER_AGENT = "Instagram 309.1.0.41.113 Android (35/15; 440dpi; 1080x1800; Google; Pixel 8 Pro; huski; qcom; en_US; 541635890)"
+USER_AGENT = "Instagram 123.0.0.0 Android (30/11; 420dpi; 1080x1920; Google; Pixel; sailfish; qcom; en_US)"
 IG_SIG_KEY = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 SIG_KEY_VERSION = "4"
 
@@ -27,14 +27,11 @@ def sign(p):
     return {"ig_sig_key_version": SIG_KEY_VERSION, "signed_body": f"{m}.{j}"}
 
 def get_c(jar, k):
-    for c in jar:
-        if c.name.lower() == k.lower(): return c.value
-    return None
+    return jar.get(k)
 
 def login_instagram(u, p):
-    s = requests.Session()
-    s.headers.update({"User-Agent": USER_AGENT, "Accept-Language": "en-US"})
-    
+    s = httpx.Client(headers={"User-Agent": USER_AGENT, "Accept-Language": "en-US"})
+
     try:
         s.post(f"{API_URL.format(version=V)}si/fetch_headers/", params={"guid": gen_uuid(True)}, timeout=10)
         csrf = get_c(s.cookies, "csrftoken")
@@ -65,5 +62,5 @@ def login_instagram(u, p):
             str(j["logged_in_user"]["pk"])
         )
     except Exception as e:
-        print(f"{PC} {R}Login Error: {e}{X}")
+        print(f"{R}Login Error: {e}{X}")
         return None

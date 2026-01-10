@@ -1,48 +1,57 @@
 import sys
 import asyncio
+import argparse
 
-from instaspyder.cli.cli_interface import initialize_search_environment, get_user_inputs
+from instaspyder.cli.cli_interface import initialize_search_environment, get_user_inputs, configuration_menu
+from instaspyder.core.config_manager import check_headers, get_config
 from instaspyder.core.state_manager import load_search_state, save_search_state, save_cumulative_results_for_keyword
 from instaspyder.core.search_logic import recursive_chain_search_async
 from instaspyder.core.instagram_api import init_async_client, close_async_client
-from instaspyder.assets.config import MAX_DEPTH
 from instaspyder.utils.colors import C, G, R, Y, X
 
 current_visited_users = set()
 current_all_found_matches = []
-initial_target_username_global = ""
+initial_seed_username_global = ""
 search_keywords_global = []
 
 async def cleanup_on_exit():
     print(f"\n{Y}--- Finalizing search results and state ---{X}")
-    if initial_target_username_global:
-        save_search_state(initial_target_username_global, current_visited_users, current_all_found_matches)
+    if initial_seed_username_global:
+        save_search_state(initial_seed_username_global, current_visited_users, current_all_found_matches)
     for kw in search_keywords_global:
         save_cumulative_results_for_keyword(kw, current_all_found_matches)
     await close_async_client()
 
-async def run_search_async():
-    global current_visited_users, current_all_found_matches, initial_target_username_global, search_keywords_global
+async def run_search_async(seed=None, keywords=None, depth_arg=None):
+    global current_visited_users, current_all_found_matches, initial_seed_username_global, search_keywords_global
 
     initialize_search_environment()
-    initial_target_username, search_keywords = get_user_inputs()
 
-    initial_target_username_global = initial_target_username
+    if seed is None or keywords is None or depth_arg is None:
+        initial_seed_username, search_keywords, depth_arg = get_user_inputs()
+    else:
+        initial_seed_username = seed
+        search_keywords = keywords
+
+    initial_seed_username_global = initial_seed_username
     search_keywords_global = search_keywords
+    current_visited_users, current_all_found_matches = load_search_state(initial_seed_username)
 
-    current_visited_users, current_all_found_matches = load_search_state(initial_target_username)
+    if depth_arg is None:
+        config = get_config()
+        depth_arg = config.get("max_depth", 2)
 
     await init_async_client()
 
     try:
-        print(f"\n{G}Starting general search from {C}@{initial_target_username}{G} for keywords: {Y}{', '.join(search_keywords)}{X}...")
-        print(f"{G}Search will explore up to {Y}{MAX_DEPTH}{G} level(s) deep into suggested user chains.{X}")
-
+        print(f"\n{G}Starting search from {C}@{initial_seed_username}{G} (Limit: {depth_arg} depths) for keywords: {Y}{', '.join(search_keywords)}{X}")
         await recursive_chain_search_async(
-            initial_target_username,
+            initial_seed_username,
             search_keywords,
             current_visited_users,
             current_all_found_matches,
+            depth=0,
+            depth_limit=int(depth_arg)
         )
         print(f"\n{G}Overall search completed successfully.{X}")
     except Exception as e:
@@ -51,8 +60,37 @@ async def run_search_async():
         await cleanup_on_exit()
 
 def main():
+    if not check_headers():
+        print(f"{R}[!] No valid session found.{X}")
+        print(f"{Y}You must provide Instagram headers or Login to use this tool.{X}")
+        input(f"\nPress Enter to open Configuration Menu...")
+        configuration_menu()
+
+        if not check_headers():
+            print(f"{R}Still no headers found. Exiting...{X}")
+            sys.exit(1)
+
+    parser = argparse.ArgumentParser(description="InstaSpyder — Recursive chain searcher")
+    parser.add_argument("-s", "--seed", help="Seed username to start search from")
+    parser.add_argument("-k", "--keywords", help="Comma-separated keywords")
+    parser.add_argument("-d", "--depth", type=int, help="Search depth (overrides config)")
+    parser.add_argument("-c", "--config", action="store_true", help="Opens interactive configuration menu")
+
+    args = parser.parse_args()
+
+    if args.config:
+        configuration_menu()
+        sys.exit(0)
+
+    cli_keywords = None
+    if args.keywords:
+        cli_keywords = [k.strip() for k in args.keywords.split(',') if k.strip()]
+
     try:
-        asyncio.run(run_search_async())
+        if args.seed and cli_keywords:
+            asyncio.run(run_search_async(seed=args.seed, keywords=cli_keywords, depth_arg=args.depth))
+        else:
+            asyncio.run(run_search_async(depth_arg=args.depth))
     except KeyboardInterrupt:
         print(f"\n{R}Ctrl+C detected. Exiting gracefully...{X}")
         sys.exit(0)

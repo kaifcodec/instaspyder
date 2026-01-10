@@ -3,14 +3,19 @@ import asyncio
 import random
 from instaspyder.core.instagram_api import fetch_chain_async
 from instaspyder.core.user_id_fetcher import get_user_id
-from instaspyder.assets.config import MAX_DEPTH
+from instaspyder.core.config_manager import get_config
 from instaspyder.utils.sanitize_text import sanitize_text
 from instaspyder.utils.colors import C, G, R, Y, X
 
-async def recursive_chain_search_async(username, keywords_to_match, visited_users, all_found_matches, depth=0, known_user_id=None):
+async def recursive_chain_search_async(username, keywords_to_match, visited_users, all_found_matches, depth=0, known_user_id=None, depth_limit=None):
     indent = "  " * depth
 
-    if depth > MAX_DEPTH:
+    # Fallback logic: if no limit was passed from main, check config
+    if depth_limit is None:
+        config = get_config()
+        depth_limit = config.get("max_depth", 2)
+
+    if depth > depth_limit:
         return
 
     user_id = known_user_id
@@ -25,7 +30,7 @@ async def recursive_chain_search_async(username, keywords_to_match, visited_user
         return
 
     visited_users.add(user_id)
-    print(f"{indent}{C}Searching chains of @{username} (ID: {user_id})... [Depth: {depth}]{X}")
+    print(f"{indent}{C}Searching chains of @{username} (ID: {user_id})... [Depth: {depth}/{depth_limit}]{X}")
 
     users_in_chain = await fetch_chain_async(user_id)
 
@@ -66,7 +71,7 @@ async def recursive_chain_search_async(username, keywords_to_match, visited_user
                     print(f"   Found via: @{username} (Depth {depth})")
                     print(f"{G}" + "="*60 + f"{X}\n")
 
-    if depth < MAX_DEPTH:
+    if depth < depth_limit:
         tasks = []
         for user_data in users_in_chain:
             await asyncio.sleep(random.uniform(0.1, 0.2))
@@ -77,7 +82,9 @@ async def recursive_chain_search_async(username, keywords_to_match, visited_user
                     visited_users,
                     all_found_matches,
                     depth + 1,
-                    known_user_id=user_data.get("id")
+                    known_user_id=user_data.get("id"),
+                    depth_limit=depth_limit # Pass the limit down the chain
                 )
             )
-        await asyncio.gather(*tasks)
+        if tasks:
+            await asyncio.gather(*tasks)
