@@ -27,6 +27,7 @@ async def run_search_async(seed=None, keywords=None, depth_arg=None):
 
     initialize_search_environment()
 
+    # Using your updated get_user_inputs which returns (seed, keywords, depth)
     if seed is None or keywords is None or depth_arg is None:
         initial_seed_username, search_keywords, depth_arg = get_user_inputs()
     else:
@@ -37,6 +38,7 @@ async def run_search_async(seed=None, keywords=None, depth_arg=None):
     search_keywords_global = search_keywords
     current_visited_users, current_all_found_matches = load_search_state(initial_seed_username)
 
+    # Fallback to config only if depth_arg is still None after both CLI and Interactive checks
     if depth_arg is None:
         config = get_config()
         depth_arg = config.get("max_depth", 2)
@@ -44,7 +46,9 @@ async def run_search_async(seed=None, keywords=None, depth_arg=None):
     await init_async_client()
 
     try:
+        # Inform user of search start
         print(f"\n{G}Starting search from {C}@{initial_seed_username}{G} (Limit: {depth_arg} depths) for keywords: {Y}{', '.join(search_keywords)}{X}")
+
         await recursive_chain_search_async(
             initial_seed_username,
             search_keywords,
@@ -55,9 +59,15 @@ async def run_search_async(seed=None, keywords=None, depth_arg=None):
         )
         print(f"\n{G}Overall search completed successfully.{X}")
     except Exception as e:
-        print(f"\n{R}An unhandled error occurred during search: {e}{X}")
+        if "Instagram Block" in str(e):
+            print(f"\n{R}Search halted by Instagram security. State NOT saved to prevent corruption.{X}")
+            # Neutralize global so cleanup_on_exit skips saving broken state
+            initial_seed_username_global = None
+        else:
+            print(f"\n{R}An unhandled error occurred: {e}{X}")
     finally:
         await cleanup_on_exit()
+
 
 def main():
     if not check_headers():

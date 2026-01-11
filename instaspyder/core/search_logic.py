@@ -34,8 +34,11 @@ async def recursive_chain_search_async(username, keywords_to_match, visited_user
 
     users_in_chain = await fetch_chain_async(user_id)
 
+    if isinstance(users_in_chain, str) and "_ERROR" in users_in_chain:
+        raise Exception(f"Instagram Block: {users_in_chain}")
+
     if not users_in_chain:
-        print(f"{indent}{Y}No users found in chain for @{username} or failed to fetch suggestions.{X}")
+        print(f"{indent}{Y}No users found in chain for @{username} or account is private.{X}")
         return
 
     for user_data in users_in_chain:

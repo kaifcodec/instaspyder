@@ -1,12 +1,12 @@
-# state_manager.py
 import json
 import os
-from instaspyder.assets.config import STATE_FILE_TEMPLATE, CUMULATIVE_RESULTS_DIR
+from instaspyder.core.config_manager import get_config, USER_HOME
 from instaspyder.utils.colors import C, G, R, Y, X
 
 def _get_state_filepath(username):
+    # Ensure state files are saved in the hidden home directory
     safe_username = "".join(c for c in username if c.isalnum())
-    return STATE_FILE_TEMPLATE.format(safe_username)
+    return os.path.join(USER_HOME, f"search_state_{safe_username}.json")
 
 def load_search_state(initial_username):
     visited_users = set()
@@ -59,7 +59,11 @@ def save_cumulative_results_for_keyword(keyword, all_matches_data):
         print(f"{C}[i] No matches found for keyword '{keyword}'. Skipping saving.{X}")
         return
 
-    folder = os.path.join(CUMULATIVE_RESULTS_DIR, keyword.lower())
+    # Dynamically pull the results directory from config
+    config = get_config()
+    cumulative_results_dir = config.get("results_dir")
+
+    folder = os.path.join(cumulative_results_dir, keyword.lower())
     os.makedirs(folder, exist_ok=True)
     filepath = os.path.join(folder, f"{keyword.lower()}_matches.json")
 
