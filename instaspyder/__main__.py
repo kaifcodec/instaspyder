@@ -70,6 +70,20 @@ async def run_search_async(seed=None, keywords=None, depth_arg=None):
 
 
 def main():
+
+    parser = argparse.ArgumentParser(description="InstaSpyder — Recursive chain searcher", add_help = False)
+    parser.add_argument("-h", "--help", action="store_true", help="Show this help message")
+    parser.add_argument("-s", "--seed", help="Seed username to start search from")
+    parser.add_argument("-k", "--keywords", help="Comma-separated keywords")
+    parser.add_argument("-d", "--depth", type=int, help="Search depth (overrides config)")
+    parser.add_argument("-c", "--config", action="store_true", help="Opens interactive configuration menu")
+
+    args = parser.parse_args()
+
+    if args.help:
+        parser.print_help()
+        sys.exit(0)
+
     if not check_headers():
         print(f"{R}[!] No valid session found.{X}")
         print(f"{Y}You must provide Instagram headers or Login to use this tool.{X}")
@@ -79,14 +93,6 @@ def main():
         if not check_headers():
             print(f"{R}Still no headers found. Exiting...{X}")
             sys.exit(1)
-
-    parser = argparse.ArgumentParser(description="InstaSpyder — Recursive chain searcher")
-    parser.add_argument("-s", "--seed", help="Seed username to start search from")
-    parser.add_argument("-k", "--keywords", help="Comma-separated keywords")
-    parser.add_argument("-d", "--depth", type=int, help="Search depth (overrides config)")
-    parser.add_argument("-c", "--config", action="store_true", help="Opens interactive configuration menu")
-
-    args = parser.parse_args()
 
     if args.config:
         configuration_menu()
