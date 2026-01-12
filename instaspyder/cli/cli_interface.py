@@ -76,11 +76,11 @@ def configuration_menu():
     while True:
         config = get_config()
         print(f"\n{Y}--- InstaSpyder Configuration ---{X}")
-        print(f"1. Update Max Search Depth (Current: {C}{config.get('max_depth')}{X})")
-        print(f"2. Change Results Saving Path (Current: {C}{config.get('results_dir')}{X})")
-        print("3. Login / Update Headers")
-        print("4. Paste Raw Headers in JSON")
-        print("5. Exit this menu")
+        print(f" 1. Update Max Search Depth (Current: {C}{config.get('max_depth')}{X})")
+        print(f" 2. Change Results Saving Path (Current: {C}{config.get('results_dir')}{X})")
+        print(" 3. Login / Update Headers")
+        print(" 4. Paste Raw cookies (session, csrf, mid, ds_user_id)")
+        print(" 5. Exit this menu")
 
         choice = input("\nSelect an option: ")
 
