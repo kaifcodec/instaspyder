@@ -26,7 +26,7 @@ async def recursive_chain_search_async(username, keywords_to_match, visited_user
         print(f"{indent}{R}Could not get user ID for @{username}. Skipping this user.{X}")
         return
 
-    if user_id in visited_users:
+    if depth > 0 and user_id in visited_users:
         return
 
     visited_users.add(user_id)

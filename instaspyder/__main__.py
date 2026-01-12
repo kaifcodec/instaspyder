@@ -17,7 +17,7 @@ search_keywords_global = []
 async def cleanup_on_exit():
     print(f"\n{Y}--- Finalizing search results and state ---{X}")
     if initial_seed_username_global:
-        save_search_state(initial_seed_username_global, current_visited_users, current_all_found_matches)
+        save_search_state(initial_seed_username_global, current_visited_users, current_all_found_matches, keywords=search_keywords_global)
     for kw in search_keywords_global:
         save_cumulative_results_for_keyword(kw, current_all_found_matches)
     await close_async_client()
@@ -27,7 +27,6 @@ async def run_search_async(seed=None, keywords=None, depth_arg=None):
 
     initialize_search_environment()
 
-    # Using your updated get_user_inputs which returns (seed, keywords, depth)
     if seed is None or keywords is None or depth_arg is None:
         initial_seed_username, search_keywords, depth_arg = get_user_inputs()
     else:
@@ -36,9 +35,9 @@ async def run_search_async(seed=None, keywords=None, depth_arg=None):
 
     initial_seed_username_global = initial_seed_username
     search_keywords_global = search_keywords
-    current_visited_users, current_all_found_matches = load_search_state(initial_seed_username)
 
-    # Fallback to config only if depth_arg is still None after both CLI and Interactive checks
+    current_visited_users, current_all_found_matches = load_search_state(initial_seed_username, current_keywords=search_keywords)
+
     if depth_arg is None:
         config = get_config()
         depth_arg = config.get("max_depth", 2)
@@ -46,7 +45,6 @@ async def run_search_async(seed=None, keywords=None, depth_arg=None):
     await init_async_client()
 
     try:
-        # Inform user of search start
         print(f"\n{G}Starting search from {C}@{initial_seed_username}{G} (Limit: {depth_arg} depths) for keywords: {Y}{', '.join(search_keywords)}{X}")
 
         await recursive_chain_search_async(
@@ -61,7 +59,6 @@ async def run_search_async(seed=None, keywords=None, depth_arg=None):
     except Exception as e:
         if "Instagram Block" in str(e):
             print(f"\n{R}Search halted by Instagram security. State NOT saved to prevent corruption.{X}")
-            # Neutralize global so cleanup_on_exit skips saving broken state
             initial_seed_username_global = None
         else:
             print(f"\n{R}An unhandled error occurred: {e}{X}")
@@ -70,8 +67,7 @@ async def run_search_async(seed=None, keywords=None, depth_arg=None):
 
 
 def main():
-
-    parser = argparse.ArgumentParser(description="InstaSpyder — Recursive chain searcher", add_help = False)
+    parser = argparse.ArgumentParser(description="InstaSpyder — Recursive chain searcher", add_help=False)
     parser.add_argument("-h", "--help", action="store_true", help="Show this help message")
     parser.add_argument("-s", "--seed", help="Seed username to start search from")
     parser.add_argument("-k", "--keywords", help="Comma-separated keywords")
@@ -93,6 +89,26 @@ def main():
         if not check_headers():
             print(f"{R}Still no headers found. Exiting...{X}")
             sys.exit(1)
+
+
+    config = get_config()
+    default_depth = config.get("max_depth", 2)
+
+
+    if args.depth is not None and args.depth > 2:
+        print(f"\n{R} You are using aggressive depth{X} (i.e. {C}{args.depth}{X}) {R}It may flag you session cookies{X}")
+        choice = input(f"\n{Y} Do you want to continue? (y/n): ").lower().strip()
+
+        if choice == "n":
+            final_choice = input(f"{C}Do you want to continue with default max depth? (i.e. {G}{default_depth}{X}) (y/n): ").lower().strip()
+            if final_choice == "y":
+                args.depth = default_depth
+            else:
+                print(f"{R}Exiting...{X}")
+                sys.exit(0)
+        elif choice != "y":
+            print(f"{R}Exiting...{X}")
+            sys.exit(0)
 
     if args.config:
         configuration_menu()
