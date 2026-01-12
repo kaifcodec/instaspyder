@@ -1,4 +1,4 @@
-# instagram_api.py
+# instagram_api.py (Modified for Async)
 import httpx
 import json
 from instaspyder.core.headers_loader import load_headers
@@ -12,7 +12,6 @@ async def init_async_client():
         headers = load_headers()
         async_client = httpx.AsyncClient(http2=True, headers=headers, timeout=20.0)
 
-
 async def close_async_client():
     global async_client
     if async_client:
@@ -24,35 +23,38 @@ async def fetch_chain_async(user_id):
         await init_async_client()
 
     url = f"https://i.instagram.com/api/v1/discover/chaining/?module=profile&target_id={user_id}&profile_chaining_check=false"
+    
     try:
         r = await async_client.get(url)
-        print(f"{G}[+] Status for User ID {user_id}: {r.status_code}{X}")
         
+        if r.status_code == 200:
+            return r.json().get("users", [])
+
+        if r.status_code == 400:
+            try:
+                error_data = r.json()
+                if any(k in error_data for k in ["challenge", "checkpoint", "suspended"]):
+                    print(f"{R}[!] Global Block: Challenge/Suspension detected on your account.{X}")
+                    return "CHECKPOINT_ERROR"
+            except json.JSONDecodeError:
+                pass
+
+            print(f"{Y}[i] Suggestions disabled or restricted for ID {user_id}. Skipping...{X}")
+            return [] 
+
         if r.status_code == 403:
             print(f"{R}[!] sessionid expired or Login Required (403).{X}")
             return "AUTH_ERROR"
-        
-        if r.status_code == 400:
-            if "challenge_required" in r.text or "suspended" in r.text:
-                print(f"{R}[!] Account Flagged or Challenge Required (400).{X}")
-                return "CHECKPOINT_ERROR"
+
+        if r.status_code == 429:
+            print(f"{R}[!] Rate limit hit (429).{X}")
             return "RATE_LIMIT_ERROR"
 
-        r.raise_for_status()
-        return r.json().get("users", [])
+        return []
 
     except httpx.RequestError as e:
-        print(f"{R}Network or request error while fetching chain for ID {user_id}: {e}{X}")
-        return []
-    except json.JSONDecodeError as e:
-        print(f"{R}Failed to parse JSON response for ID {user_id}: {e}.{X}")
-        return []
-    except httpx.HTTPStatusError as e:
-        # Extra safety for any other HTTP errors not caught above
-        print(f"{R}HTTP error {e.response.status_code} while fetching chain for ID {user_id}: {e.response.text}{X}")
-        if e.response.status_code in [400, 403, 429]:
-            return "GENERIC_BLOCK_ERROR"
+        print(f"{R}Network error while fetching chain for ID {user_id}: {e}{X}")
         return []
     except Exception as e:
-        print(f"{R}An unexpected error occurred while fetching chain for ID {user_id}: {e}{X}")
+        print(f"{R}An unexpected error occurred: {e}{X}")
         return []

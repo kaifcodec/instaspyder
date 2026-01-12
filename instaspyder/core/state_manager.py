@@ -4,7 +4,7 @@ from instaspyder.core.config_manager import get_config, USER_HOME
 from instaspyder.utils.colors import C, G, R, Y, X
 
 def _get_state_filepath(username):
-    # Ensure state files are saved in the hidden home directory
+    # state files are saved in the hidden home directory
     safe_username = "".join(c for c in username if c.isalnum())
     return os.path.join(USER_HOME, f"search_state_{safe_username}.json")
 
