@@ -7,7 +7,7 @@ from instaspyder.utils.colors import R, X, C
 
 V = "v1"
 API_URL = "https://i.instagram.com/api/{version}/"
-USER_AGENT = "Instagram 123.0.0.0 Android (30/11; 420dpi; 1080x1920; Google; Pixel; sailfish; qcom; en_US)"
+USER_AGENT = "Instagram 123.0.0.0 Android (30/11; 480dpi; 1080x2340; samsung; SM-G991B; qcom; en_US)"
 IG_SIG_KEY = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 SIG_KEY_VERSION = "4"
 

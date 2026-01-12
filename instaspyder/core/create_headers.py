@@ -3,7 +3,7 @@ import base64
 from instaspyder.core.login import login_instagram
 from instaspyder.core.config_manager import HEADERS_FILE
 
-USER_AGENT = "Instagram 123.0.0.0 Android (30/11; 420dpi; 1080x1920; Google; Pixel; sailfish; qcom; en_US)"
+USER_AGENT = "Instagram 123.0.0.0 Android (30/11; 480dpi; 1080x2340; samsung; SM-G991B; qcom; en_US)"
 APP_ID = "567067343352427"
 
 def generate_bearer_token(ds_user_id, sessionid):
