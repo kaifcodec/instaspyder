@@ -1,0 +1,23 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "instaspyder"
+authors = [{name = "Kaif", email = "kaifcodec@gmail.com"}]
+dynamic = ["version", "description"]
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "httpx[http2]",
+    "colorama"
+]
+
+[project.urls]
+Source = "https://github.com/kaifcodec/instaspyder"
+
+[project.scripts]
+instaspyder = "instaspyder.__main__:main"
+
+[tool.flit.sdist]
+exclude = ["rm_cache.py", "results/", "instaspyder/assets/headers.json"]
