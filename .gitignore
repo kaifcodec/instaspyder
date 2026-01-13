@@ -2,4 +2,4 @@
 __pycache__
 results
 rm_cache.py
-
+.env

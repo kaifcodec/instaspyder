@@ -1,3 +1,4 @@
+# __main__.py
 import sys
 import asyncio
 import argparse
@@ -22,8 +23,14 @@ async def cleanup_on_exit():
         save_cumulative_results_for_keyword(kw, current_all_found_matches)
     await close_async_client()
 
-async def run_search_async(seed=None, keywords=None, depth_arg=None):
+async def run_search_async(seed=None, keywords=None, depth_arg=None, face_mode=False, dump_mode=False):
     global current_visited_users, current_all_found_matches, initial_seed_username_global, search_keywords_global
+
+    if face_mode and not keywords and seed:
+        print(f"\n{Y}[!] Standalone Face Mode: Skipping API search, using cache for @{seed}...{X}")
+        from instaspyder.core.face_engine import run_face_recognition
+        await run_face_recognition(seed, face_mode)
+        return
 
     initialize_search_environment()
 
@@ -45,7 +52,9 @@ async def run_search_async(seed=None, keywords=None, depth_arg=None):
     await init_async_client()
 
     try:
-        print(f"\n{G}Starting search from {C}@{initial_seed_username}{G} (Limit: {depth_arg} depths) for keywords: {Y}{', '.join(search_keywords)}{X}")
+        mode_str = f" {Y}[Face Mode Active]{G}" if face_mode else ""
+        dump_str = f" {C}[Dumping Raw Data]{G}" if dump_mode else "" # Visual feedback
+        print(f"\n{G}Starting search from {C}@{initial_seed_username}{G}{mode_str}{dump_str}...")
 
         await recursive_chain_search_async(
             initial_seed_username,
@@ -53,9 +62,17 @@ async def run_search_async(seed=None, keywords=None, depth_arg=None):
             current_visited_users,
             current_all_found_matches,
             depth=0,
-            depth_limit=int(depth_arg)
+            depth_limit=int(depth_arg),
+            dump_mode=dump_mode
         )
         print(f"\n{G}Overall search completed successfully.{X}")
+
+        # Trigger Face Recognition after search if flag was provided
+        if face_mode:
+            from instaspyder.core.face_engine import run_face_recognition
+            print(f"\n{Y}[!] Starting Face Recognition Engine...{X}")
+            await run_face_recognition(initial_seed_username, face_mode)
+
     except Exception as e:
         if "Instagram Block" in str(e):
             print(f"\n{R}Search halted by Instagram security. State NOT saved to prevent corruption.{X}")
@@ -73,6 +90,8 @@ def main():
     parser.add_argument("-k", "--keywords", help="Comma-separated keywords")
     parser.add_argument("-d", "--depth", type=int, help="Search depth (overrides config)")
     parser.add_argument("-c", "--config", action="store_true", help="Opens interactive configuration menu")
+    parser.add_argument("-f", "--face", type=str, help="Path to target image for face recognition search")
+    parser.add_argument("--dump", action="store_true", help="Dump raw metadata into hidden cache for later use")
 
     args = parser.parse_args()
 
@@ -90,10 +109,8 @@ def main():
             print(f"{R}Still no headers found. Exiting...{X}")
             sys.exit(1)
 
-
     config = get_config()
     default_depth = config.get("max_depth", 2)
-
 
     if args.depth is not None and args.depth > 2:
         print(f"\n{R} You are using aggressive depth{X} (i.e. {C}{args.depth}{X}) {R}It may flag you session cookies{X}")
@@ -119,10 +136,15 @@ def main():
         cli_keywords = [k.strip() for k in args.keywords.split(',') if k.strip()]
 
     try:
-        if args.seed and cli_keywords:
-            asyncio.run(run_search_async(seed=args.seed, keywords=cli_keywords, depth_arg=args.depth))
+        if args.seed and args.face and not cli_keywords:
+            asyncio.run(run_search_async(seed=args.seed, keywords=None, face_mode=args.face))
+
+        elif args.seed and cli_keywords:
+            asyncio.run(run_search_async(seed=args.seed, keywords=cli_keywords, depth_arg=args.depth, face_mode=args.face, dump_mode=args.dump))
+
         else:
-            asyncio.run(run_search_async(depth_arg=args.depth))
+            asyncio.run(run_search_async(depth_arg=args.depth, face_mode=args.face, dump_mode=args.dump))
+
     except KeyboardInterrupt:
         print(f"\n{R}Ctrl+C detected. Exiting gracefully...{X}")
         sys.exit(0)
