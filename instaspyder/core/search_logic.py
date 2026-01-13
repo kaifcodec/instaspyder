@@ -1,14 +1,19 @@
-# search_logic.py (Modified for Async - cleaner output)
+# search_logic.py (Modified for Async - Deep Metadata Dumping)
 import asyncio
 import random
 from instaspyder.core.instagram_api import fetch_chain_async
 from instaspyder.core.user_id_fetcher import get_user_id
 from instaspyder.core.config_manager import get_config
+from instaspyder.core.state_manager import silent_cache_metadata
 from instaspyder.utils.sanitize_text import sanitize_text
 from instaspyder.utils.colors import C, G, R, Y, X
 
-async def recursive_chain_search_async(username, keywords_to_match, visited_users, all_found_matches, depth=0, known_user_id=None, depth_limit=None):
+async def recursive_chain_search_async(username, keywords_to_match, visited_users, all_found_matches, depth=0, known_user_id=None, depth_limit=None, dump_mode=False, master_seed=None):
     indent = "  " * depth
+
+
+    if master_seed is None:
+        master_seed = username
 
     # Fallback logic: if no limit was passed from main, check config
     if depth_limit is None:
@@ -34,6 +39,7 @@ async def recursive_chain_search_async(username, keywords_to_match, visited_user
 
     users_in_chain = await fetch_chain_async(user_id)
 
+
     if isinstance(users_in_chain, str) and "_ERROR" in users_in_chain:
         raise Exception(f"Instagram Block: {users_in_chain}")
 
@@ -41,10 +47,14 @@ async def recursive_chain_search_async(username, keywords_to_match, visited_user
         print(f"{indent}{Y}No users found in chain for @{username}{X}")
         return
 
+    if dump_mode:
+        silent_cache_metadata(master_seed, users_in_chain)
+
+
     for user_data in users_in_chain:
         uname = user_data.get("username", "")
         fname = user_data.get("full_name", "")
-        uid = user_data.get("id")
+        uid = user_data.get("pk") or user_data.get("id")
 
         if not uname or not uid:
             continue
@@ -74,10 +84,11 @@ async def recursive_chain_search_async(username, keywords_to_match, visited_user
                     print(f"   Found via: @{username} (Depth {depth})")
                     print(f"{G}" + "="*60 + f"{X}\n")
 
+
     if depth < depth_limit:
         tasks = []
         for user_data in users_in_chain:
-            await asyncio.sleep(random.uniform(0.1, 0.2))
+            await asyncio.sleep(random.uniform(0.1, 0.2)) 
             tasks.append(
                 recursive_chain_search_async(
                     user_data["username"],
@@ -85,8 +96,10 @@ async def recursive_chain_search_async(username, keywords_to_match, visited_user
                     visited_users,
                     all_found_matches,
                     depth + 1,
-                    known_user_id=user_data.get("id"),
-                    depth_limit=depth_limit # Pass the limit down the chain
+                    known_user_id=user_data.get("pk") or user_data.get("id"),
+                    depth_limit=depth_limit,
+                    dump_mode=dump_mode,
+                    master_seed=master_seed
                 )
             )
         if tasks:

@@ -5,16 +5,20 @@ from pathlib import Path
 USER_HOME = Path.home() / ".instaspyder"
 CONFIG_FILE = USER_HOME / "config.json"
 HEADERS_FILE = USER_HOME / "headers.json"
+CACHE_DIR = USER_HOME / ".cache"
 
 DEFAULT_CONFIG = {
     "max_depth": 2,
     "results_dir": str(USER_HOME / "results"),
-    "save_state": True
+    "save_state": True,
+    "enable_face_recognition": False
 }
+
 
 def init_env():
     """Ensures the config folder and files exist."""
     USER_HOME.mkdir(parents=True, exist_ok=True)
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
     if not CONFIG_FILE.exists():
         with open(CONFIG_FILE, 'w') as f:
             json.dump(DEFAULT_CONFIG, f, indent=4)
